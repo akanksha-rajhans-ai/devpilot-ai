@@ -1,14 +1,40 @@
-from pydantic_settings import BaseSettings
+from functools import lru_cache
+from typing import Literal
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+Environment = Literal["local", "test", "staging", "production"]
 
 
 class Settings(BaseSettings):
-    app_name: str = "DevPilot AI"
+    app_name: str = "DevPilot Platform"
     app_version: str = "0.1.0"
-    environment: str = "local"
+    environment: Environment = "local"
+
+    api_v1_prefix: str = "/api/v1"
+
+    log_level: str = "INFO"
+
     llm_provider: str = "mock"
+    openai_api_key: str = ""
+    openai_model: str = "gpt-4.1-mini"
 
-    class Config:
-        env_file = ".env"
+    database_url: str = Field(
+        default="sqlite:///./devpilot.db",
+        description="Primary application database URL",
+    )
+
+    redis_url: str = "redis://localhost:6379/0"
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
 
-settings = Settings()
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()

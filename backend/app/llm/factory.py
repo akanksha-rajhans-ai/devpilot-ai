@@ -1,6 +1,8 @@
-from app.core.config import settings
 from app.llm.base import LLMProvider
 from app.llm.mock_provider import MockLLMProvider
+from app.core.config import get_settings
+
+settings = get_settings()
 
 
 def get_llm_provider() -> LLMProvider:
