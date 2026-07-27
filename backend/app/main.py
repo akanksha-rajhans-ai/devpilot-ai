@@ -1,14 +1,8 @@
 from fastapi import FastAPI
 
-#configure_logging()
-#Runs before we create loggers and before the app starts handling requests.
-#get_logger(__name__)
-#Creates a logger named after the current Python module, likely app.main.
-#logger.info(...)
-#Logs a startup event. This proves logging works when the app boots.
-
 from app.api.health import router as health_router
 from app.core.config import get_settings
+from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging, get_logger
 
 configure_logging()
@@ -21,6 +15,21 @@ app = FastAPI(
     version=settings.app_version,
 )
 
+register_exception_handlers(app)
+
 app.include_router(health_router)
 
-logger.info("Application started: %s version=%s environment=%s", settings.app_name, settings.app_version, settings.environment)
+logger.info(
+    "Application started: %s version=%s environment=%s",
+    settings.app_name,
+    settings.app_version,
+    settings.environment,
+)
+
+@app.get("/__test__/error", include_in_schema=False)
+async def test_error():
+    raise RuntimeError("Intentional test error")
+
+@app.get("/__test__/validation", include_in_schema=False)
+async def test_validation(required_value: int):
+    return {"required_value": required_value}
