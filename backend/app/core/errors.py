@@ -1,12 +1,12 @@
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.core.context import get_trace_id
 from app.core.logging import get_logger
-from typing import Any, Optional
 
 logger = get_logger(__name__)
 
@@ -21,6 +21,7 @@ def build_error_response(
             "code": code,
             "message": message,
             "details": details or {},
+            "trace_id": get_trace_id(),
         }
     }
 
