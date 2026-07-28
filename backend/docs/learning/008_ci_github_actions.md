@@ -32,3 +32,11 @@ CI would add linting, type checks, coverage, Docker image builds, vulnerability 
 3. Why pin the Python version in CI?
 4. What checks should block a pull request?
 5. How does CI lead into CD?
+
+## CI Failure Lesson
+
+CI initially failed because the local `.env` used `APP_NAME="DevPilot AI"`, while the default value in `config.py` still used `DevPilot Platform`.
+
+Local tests passed because `.env` masked the mismatch. GitHub Actions ran in a clean environment without `.env`, so it exposed the incorrect default.
+
+This showed why CI matters: it validates the project outside the developer's local machine and catches hidden environment assumptions.
