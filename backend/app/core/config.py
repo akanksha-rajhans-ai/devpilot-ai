@@ -9,7 +9,7 @@ Environment = Literal["local", "test", "staging", "production"]
 
 
 class Settings(BaseSettings):
-    app_name: str = "DevPilot Platform"
+    app_name: str = "DevPilot AI"
     app_version: str = "0.1.0"
     environment: Environment = "local"
 
