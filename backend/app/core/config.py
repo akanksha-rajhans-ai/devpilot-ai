@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_model: str = "gpt-4.1-mini"
 
+    jwt_secret_key: str = "dev-only-change-me"
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+
     database_url: str = Field(
         default="sqlite:///./devpilot.db",
         description="Primary application database URL",
