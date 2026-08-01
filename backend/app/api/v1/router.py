@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 
 from app.core.dependencies import get_current_user, require_roles
 from app.schemas.user import CurrentUser
+from app.core.audit import audit_event
 
 api_router = APIRouter()
 
@@ -23,6 +24,12 @@ async def get_me(current_user: CurrentUser = Depends(get_current_user)):
 async def admin_status(
     current_user: CurrentUser = Depends(require_roles("admin")),
 ):
+    audit_event(
+        event="admin.status.accessed",
+        outcome="success",
+        actor_id=current_user.id,
+    )
+
     return {
         "status": "ok",
         "admin": current_user.id,
