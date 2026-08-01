@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, require_roles
 from app.schemas.user import CurrentUser
 
 api_router = APIRouter()
@@ -17,3 +17,13 @@ async def api_status():
 @api_router.get("/me", tags=["users"])
 async def get_me(current_user: CurrentUser = Depends(get_current_user)):
     return current_user
+
+
+@api_router.get("/admin/status", tags=["admin"])
+async def admin_status(
+    current_user: CurrentUser = Depends(require_roles("admin")),
+):
+    return {
+        "status": "ok",
+        "admin": current_user.id,
+    }

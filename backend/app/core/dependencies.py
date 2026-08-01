@@ -5,6 +5,8 @@ from app.core.config import Settings, get_settings
 from app.core.security import decode_access_token
 from app.schemas.user import CurrentUser
 
+from collections.abc import Callable
+
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -41,4 +43,23 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    return CurrentUser(id=subject)
+    roles = payload.get("roles", [])
+
+    if not isinstance(roles, list):
+        roles = []
+
+    return CurrentUser(id=subject, roles=roles)
+
+def require_roles(*required_roles: str) -> Callable:
+    def role_checker(
+        current_user: CurrentUser = Depends(get_current_user),
+    ) -> CurrentUser:
+        if not any(role in current_user.roles for role in required_roles):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions",
+            )
+
+        return current_user
+
+    return role_checker
