@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
 
+    rate_limit_enabled: bool = True
+    rate_limit_requests: int = 60
+    rate_limit_window_seconds: int = 60
+
     database_url: str = Field(
         default="sqlite:///./devpilot.db",
         description="Primary application database URL",

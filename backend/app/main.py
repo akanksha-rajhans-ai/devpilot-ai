@@ -5,7 +5,7 @@ from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging, get_logger
-from app.core.middleware import TraceMiddleware
+from app.core.middleware import InMemoryRateLimitMiddleware, TraceMiddleware
 
 configure_logging()
 
@@ -17,6 +17,7 @@ app = FastAPI(
     version=settings.app_version,
 )
 
+app.add_middleware(InMemoryRateLimitMiddleware)
 app.add_middleware(TraceMiddleware)
 register_exception_handlers(app)
 

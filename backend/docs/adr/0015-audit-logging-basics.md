@@ -22,3 +22,4 @@ Add a reusable audit logging utility that emits structured audit events through 
 ## Consequences
 
 Security-sensitive events can now be logged consistently with event name, outcome, actor ID, trace ID, and metadata. The current implementation logs to stdout and does not yet provide persistence, tamper resistance, retention policy, or SIEM integration.
+
