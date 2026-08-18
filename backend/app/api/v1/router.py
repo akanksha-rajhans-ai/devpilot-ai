@@ -4,6 +4,10 @@ from app.core.dependencies import get_current_user, require_roles
 from app.schemas.user import CurrentUser
 from app.core.audit import audit_event
 
+from app.llm.factory import get_llm_provider
+from app.schemas.chat import ChatRequest, ChatResponse
+from app.services.chat_service import ChatService
+
 api_router = APIRouter()
 
 
@@ -13,6 +17,12 @@ async def api_status():
         "status": "ok",
         "api_version": "v1",
     }
+
+@api_router.post("/chat", response_model=ChatResponse, tags=["chat"])
+async def chat(request: ChatRequest):
+    provider = get_llm_provider()
+    service = ChatService(provider)
+    return await service.chat(request)
 
 
 @api_router.get("/me", tags=["users"])
