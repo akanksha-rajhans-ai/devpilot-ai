@@ -16,4 +16,5 @@ class ChatResponse(BaseModel):
     model: str
     latency_ms: float
     usage: LLMUsage
+    prompt_id: str
     conversation_id: Optional[str] = None

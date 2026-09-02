@@ -17,9 +17,11 @@ def test_chat_returns_mock_response():
     assert response.status_code == 200
 
     body = response.json()
-    assert body["answer"] == "Mock response to: Explain RAG in simple terms"
+    assert "Mock response to:" in body["answer"]
+    assert "Explain RAG in simple terms" in body["answer"]
     assert body["provider"] == "mock"
     assert body["model"] == "mock-dev-model"
+    assert body["prompt_id"] == "chat.general:v1"
     assert body["conversation_id"] == "demo-1"
     assert body["latency_ms"] >= 0
     assert body["usage"]["input_tokens"] is not None
