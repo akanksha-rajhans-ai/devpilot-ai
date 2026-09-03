@@ -1,4 +1,5 @@
 from app.llm.base import LLMProvider
+from app.observability.llm import record_llm_call
 from app.prompts.registry import get_prompt_template
 from app.schemas.chat import ChatRequest, ChatResponse
 
@@ -12,6 +13,11 @@ class ChatService:
         prompt = prompt_template.render(message=request.message)
 
         result = await self.llm_provider.generate(prompt)
+
+        record_llm_call(
+            prompt_id=prompt_template.prompt_id,
+            result=result,
+        )
 
         return ChatResponse(
             answer=result.content,
