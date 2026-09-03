@@ -1,7 +1,9 @@
 from app.llm.base import LLMProvider
+from app.llm.errors import LLMProviderError
 from app.observability.llm import record_llm_call
 from app.prompts.registry import get_prompt_template
 from app.schemas.chat import ChatRequest, ChatResponse
+from app.schemas.llm import LLMResult, LLMUsage
 
 
 class ChatService:
@@ -12,7 +14,24 @@ class ChatService:
         prompt_template = get_prompt_template("chat.general")
         prompt = prompt_template.render(message=request.message)
 
-        result = await self.llm_provider.generate(prompt)
+        try:
+            result = await self.llm_provider.generate(prompt)
+        except LLMProviderError as exc:
+            failure_result = LLMResult(
+                content="",
+                provider=exc.provider,
+                model=exc.model,
+                latency_ms=0,
+                usage=LLMUsage(),
+            )
+
+            record_llm_call(
+                prompt_id=prompt_template.prompt_id,
+                result=failure_result,
+                outcome="failure",
+            )
+
+            raise
 
         record_llm_call(
             prompt_id=prompt_template.prompt_id,

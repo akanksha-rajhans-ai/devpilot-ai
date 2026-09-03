@@ -1,6 +1,7 @@
 import time
 
 from app.llm.base import LLMProvider
+from app.llm.errors import LLMProviderError
 from app.schemas.llm import LLMResult, LLMUsage
 
 
@@ -9,6 +10,13 @@ class MockLLMProvider(LLMProvider):
     model = "mock-dev-model"
 
     async def generate(self, prompt: str) -> LLMResult:
+        if "__simulate_provider_failure__" in prompt:
+            raise LLMProviderError(
+                message="Mock provider failed",
+                provider=self.name,
+                model=self.model,
+            )
+
         start_time = time.perf_counter()
 
         content = f"Mock response to: {prompt}"

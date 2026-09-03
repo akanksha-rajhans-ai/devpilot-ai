@@ -8,6 +8,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.core.context import get_trace_id
 from app.core.logging import get_logger
 
+from app.llm.errors import LLMProviderError
+
 logger = get_logger(__name__)
 
 
@@ -76,6 +78,30 @@ async def validation_exception_handler(
         ),
     )
 
+async def llm_provider_exception_handler(
+    request: Request,
+    exc: LLMProviderError,
+) -> JSONResponse:
+    logger.error(
+        "LLM provider failure path=%s provider=%s model=%s error=%s",
+        request.url.path,
+        exc.provider,
+        exc.model,
+        str(exc),
+    )
+
+    return JSONResponse(
+        status_code=status.HTTP_502_BAD_GATEWAY,
+        content=build_error_response(
+            code="LLM_PROVIDER_ERROR",
+            message="AI provider is temporarily unavailable",
+            details={
+                "path": request.url.path,
+                "provider": exc.provider,
+                "model": exc.model,
+            },
+        ),
+    )
 
 async def unhandled_exception_handler(
     request: Request,
@@ -99,4 +125,5 @@ async def unhandled_exception_handler(
 def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    app.add_exception_handler(LLMProviderError, llm_provider_exception_handler)
     app.add_exception_handler(Exception, unhandled_exception_handler)
