@@ -8,6 +8,9 @@ from app.llm.factory import get_llm_provider
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.services.chat_service import ChatService
 
+from app.agents.workflow import agent_workflow
+from app.schemas.agent import AgentRunRequest, AgentRunResponse
+
 api_router = APIRouter()
 
 
@@ -44,3 +47,18 @@ async def admin_status(
         "status": "ok",
         "admin": current_user.id,
     }
+
+
+@api_router.post("/agent/run", response_model=AgentRunResponse, tags=["agents"])
+async def run_agent(request: AgentRunRequest):
+    result = await agent_workflow.ainvoke(
+        {
+            "user_message": request.message,
+        }
+    )
+
+    return AgentRunResponse(
+        answer=result["answer"],
+        plan=result["plan"],
+        workflow="minimal-langgraph:v1",
+    )
