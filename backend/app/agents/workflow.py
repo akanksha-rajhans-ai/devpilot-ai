@@ -1,6 +1,9 @@
 from langgraph.graph import END, START, StateGraph
 
 from app.agents.state import AgentState
+from app.llm.factory import get_llm_provider
+from app.observability.llm import record_llm_call
+from app.prompts.registry import get_prompt_template
 
 
 def plan_node(state: AgentState) -> AgentState:
@@ -11,16 +14,30 @@ def plan_node(state: AgentState) -> AgentState:
     }
 
 
-def answer_node(state: AgentState) -> AgentState:
-    user_message = state["user_message"]
-    plan = state["plan"]
+async def answer_node(state: AgentState) -> AgentState:
+    prompt_template = get_prompt_template("agent.answer")
+
+    prompt = prompt_template.render(
+        plan=state["plan"],
+        message=state["user_message"],
+    )
+
+    provider = get_llm_provider()
+    result = await provider.generate(prompt)
+
+    record_llm_call(
+        prompt_id=prompt_template.prompt_id,
+        result=result,
+        metadata={"workflow": "minimal-langgraph:v2"},
+    )
 
     return {
-        "answer": (
-            "LangGraph workflow completed. "
-            f"Plan: {plan}. "
-            f"Original request: {user_message}"
-        )
+        "answer": result.content,
+        "provider": result.provider,
+        "model": result.model,
+        "prompt_id": prompt_template.prompt_id,
+        "latency_ms": result.latency_ms,
+        "usage": result.usage,
     }
 
 

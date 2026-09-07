@@ -60,5 +60,10 @@ async def run_agent(request: AgentRunRequest):
     return AgentRunResponse(
         answer=result["answer"],
         plan=result["plan"],
-        workflow="minimal-langgraph:v1",
+        workflow="minimal-langgraph:v2",
+        provider=result["provider"],
+        model=result["model"],
+        prompt_id=result["prompt_id"],
+        latency_ms=result["latency_ms"],
+        usage=result["usage"],
     )
