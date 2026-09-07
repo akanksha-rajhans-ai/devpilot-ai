@@ -6,6 +6,7 @@ from app.schemas.llm import LLMUsage
 class AgentState(TypedDict, total=False):
     user_message: str
     plan: str
+    route: str
     answer: str
     provider: str
     model: str

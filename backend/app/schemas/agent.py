@@ -11,6 +11,7 @@ class AgentRunResponse(BaseModel):
     answer: str
     plan: str
     workflow: str
+    route: str
     provider: str
     model: str
     prompt_id: str

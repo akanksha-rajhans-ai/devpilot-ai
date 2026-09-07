@@ -60,7 +60,8 @@ async def run_agent(request: AgentRunRequest):
     return AgentRunResponse(
         answer=result["answer"],
         plan=result["plan"],
-        workflow="minimal-langgraph:v2",
+        workflow="conditional-langgraph:v1",
+        route=result["route"],
         provider=result["provider"],
         model=result["model"],
         prompt_id=result["prompt_id"],

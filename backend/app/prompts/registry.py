@@ -36,11 +36,25 @@ AGENT_ANSWER_V1 = PromptTemplate(
     ),
 )
 
+AGENT_CODE_EXPLANATION_V1 = PromptTemplate(
+    name="agent.code_explanation",
+    version="v1",
+    template=(
+        "You are DevPilot AI. Explain code and software engineering concepts clearly.\n"
+        "Use practical engineering language.\n\n"
+        "Plan:\n{plan}\n\n"
+        "User message:\n{message}"
+    ),
+)
+
 def get_prompt_template(name: str, version: str = "v1") -> PromptTemplate:
     if name == "chat.general" and version == "v1":
         return CHAT_GENERAL_V1
 
     if name == "agent.answer" and version == "v1":
         return AGENT_ANSWER_V1
+    
+    if name == "agent.code_explanation" and version == "v1":
+        return AGENT_CODE_EXPLANATION_V1
 
     raise ValueError(f"Unsupported prompt template: {name}:{version}")

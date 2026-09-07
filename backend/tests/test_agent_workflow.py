@@ -8,34 +8,43 @@ client = TestClient(app)
 
 
 @pytest.mark.asyncio
-async def test_agent_workflow_runs_directly():
+async def test_agent_workflow_routes_code_question():
     result = await agent_workflow.ainvoke(
         {
-            "user_message": "Explain dependency injection",
+            "user_message": "Explain this FastAPI function",
         }
     )
 
-    assert "plan" in result
-    assert "answer" in result
+    assert result["route"] == "code_explanation"
+    assert result["prompt_id"] == "agent.code_explanation:v1"
     assert result["provider"] == "mock"
-    assert result["model"] == "mock-dev-model"
+    assert "Explain this FastAPI function" in result["answer"]
+
+
+@pytest.mark.asyncio
+async def test_agent_workflow_routes_general_question():
+    result = await agent_workflow.ainvoke(
+        {
+            "user_message": "What is good engineering communication?",
+        }
+    )
+
+    assert result["route"] == "general_answer"
     assert result["prompt_id"] == "agent.answer:v1"
-    assert "Explain dependency injection" in result["answer"]
+    assert result["provider"] == "mock"
+    assert "What is good engineering communication?" in result["answer"]
 
 
-def test_agent_run_endpoint():
+def test_agent_run_endpoint_includes_route():
     response = client.post(
         "/api/v1/agent/run",
-        json={"message": "Explain trace IDs"},
+        json={"message": "Explain trace IDs in FastAPI"},
     )
 
     assert response.status_code == 200
 
     body = response.json()
-    assert body["workflow"] == "minimal-langgraph:v2"
+    assert body["workflow"] == "conditional-langgraph:v1"
+    assert body["route"] == "code_explanation"
     assert body["provider"] == "mock"
-    assert body["model"] == "mock-dev-model"
-    assert body["prompt_id"] == "agent.answer:v1"
-    assert "Explain trace IDs" in body["answer"]
-    assert "plan" in body
-    assert "usage" in body
+    assert body["prompt_id"] == "agent.code_explanation:v1"
