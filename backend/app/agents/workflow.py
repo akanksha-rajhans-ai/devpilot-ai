@@ -11,6 +11,8 @@ from app.llm.errors import LLMProviderError
 from app.schemas.llm import LLMResult, LLMUsage
 from langgraph.types import RetryPolicy
 
+from langgraph.checkpoint.memory import InMemorySaver
+
 def should_retry_provider_error(exc: Exception) -> bool:
     return isinstance(exc, LLMProviderError) and exc.retryable
 
@@ -190,7 +192,8 @@ def build_agent_workflow():
     graph_builder.add_edge("code_explanation", END)
     graph_builder.add_edge("general_answer", END)
 
-    return graph_builder.compile()
+    checkpointer = InMemorySaver()
+    return graph_builder.compile(checkpointer=checkpointer)
 
 
 agent_workflow = build_agent_workflow()

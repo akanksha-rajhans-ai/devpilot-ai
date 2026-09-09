@@ -11,6 +11,8 @@ from app.services.chat_service import ChatService
 from app.agents.workflow import agent_workflow
 from app.schemas.agent import AgentRunRequest, AgentRunResponse
 
+import uuid
+
 api_router = APIRouter()
 
 
@@ -51,10 +53,17 @@ async def admin_status(
 
 @api_router.post("/agent/run", response_model=AgentRunResponse, tags=["agents"])
 async def run_agent(request: AgentRunRequest):
+    thread_id = request.thread_id or str(uuid.uuid4())
+
     result = await agent_workflow.ainvoke(
         {
             "user_message": request.message,
-        }
+        },
+        config={
+            "configurable": {
+                "thread_id": thread_id,
+            }
+        },
     )
 
     return AgentRunResponse(
@@ -64,6 +73,7 @@ async def run_agent(request: AgentRunRequest):
         plan=result["plan"],
         workflow="conditional-langgraph:v2",
         route=result["route"],
+        thread_id=thread_id,
         provider=result.get("provider"),
         model=result.get("model"),
         prompt_id=result.get("prompt_id"),

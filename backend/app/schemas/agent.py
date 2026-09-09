@@ -7,6 +7,7 @@ from app.schemas.llm import LLMUsage
 
 class AgentRunRequest(BaseModel):
     message: str = Field(..., min_length=1)
+    thread_id: Optional[str] = None
 
 
 class AgentRunResponse(BaseModel):
@@ -16,6 +17,7 @@ class AgentRunResponse(BaseModel):
     plan: str
     workflow: str
     route: str
+    thread_id: str
     provider: Optional[str] = None
     model: Optional[str] = None
     prompt_id: Optional[str] = None

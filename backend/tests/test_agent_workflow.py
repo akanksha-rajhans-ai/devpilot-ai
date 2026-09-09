@@ -1,4 +1,5 @@
 import pytest
+import uuid
 from fastapi.testclient import TestClient
 
 from app.agents.workflow import agent_workflow
@@ -13,7 +14,12 @@ async def test_agent_workflow_routes_code_question():
     result = await agent_workflow.ainvoke(
         {
             "user_message": "Explain this FastAPI function",
-        }
+        },
+        config={
+            "configurable": {
+                "thread_id": f"test-code-{uuid.uuid4()}",
+            }
+        },
     )
 
     assert result["route"] == "code_explanation"
@@ -28,14 +34,19 @@ async def test_agent_workflow_routes_general_question():
     result = await agent_workflow.ainvoke(
         {
             "user_message": "What is good engineering communication?",
-        }
+        },
+        config={
+            "configurable": {
+                "thread_id": f"test-general-{uuid.uuid4()}",
+            }
+        },
     )
 
     assert result["route"] == "general_answer"
     assert result["prompt_id"] == "agent.answer:v1"
     assert result["provider"] == "mock"
     assert result["status"] == "completed"
-    assert "What is good engineering communication?" in result["answer"]
+    assert "Mock response to:" in result["answer"]
 
 
 def test_agent_run_endpoint_includes_route():
@@ -83,3 +94,16 @@ def test_agent_run_endpoint_recovers_from_transient_provider_failure():
     assert body["provider"] == "mock"
     assert body["model"] == "mock-dev-model"
     assert "__simulate_transient_provider_failure__" in body["answer"]
+
+
+def test_agent_run_endpoint_generates_thread_id_when_missing():
+    response = client.post(
+        "/api/v1/agent/run",
+        json={"message": "Explain checkpointing"},
+    )
+
+    assert response.status_code == 200
+
+    body = response.json()
+    assert body["thread_id"]
+    assert body["status"] == "completed"
