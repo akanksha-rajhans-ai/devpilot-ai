@@ -58,13 +58,15 @@ async def run_agent(request: AgentRunRequest):
     )
 
     return AgentRunResponse(
-        answer=result["answer"],
+        status=result["status"],
+        answer=result.get("answer"),
+        error=result.get("error"),
         plan=result["plan"],
-        workflow="conditional-langgraph:v1",
+        workflow="conditional-langgraph:v2",
         route=result["route"],
-        provider=result["provider"],
-        model=result["model"],
-        prompt_id=result["prompt_id"],
-        latency_ms=result["latency_ms"],
-        usage=result["usage"],
+        provider=result.get("provider"),
+        model=result.get("model"),
+        prompt_id=result.get("prompt_id"),
+        latency_ms=result.get("latency_ms"),
+        usage=result.get("usage"),
     )

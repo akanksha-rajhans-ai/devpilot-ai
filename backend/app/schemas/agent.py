@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel, Field
 
 from app.schemas.llm import LLMUsage
@@ -8,12 +10,14 @@ class AgentRunRequest(BaseModel):
 
 
 class AgentRunResponse(BaseModel):
-    answer: str
+    status: str
+    answer: Optional[str] = None
+    error: Optional[str] = None
     plan: str
     workflow: str
     route: str
-    provider: str
-    model: str
-    prompt_id: str
-    latency_ms: float
-    usage: LLMUsage
+    provider: Optional[str] = None
+    model: Optional[str] = None
+    prompt_id: Optional[str] = None
+    latency_ms: Optional[float] = None
+    usage: Optional[LLMUsage] = None

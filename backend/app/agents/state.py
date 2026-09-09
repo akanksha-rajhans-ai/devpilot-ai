@@ -7,6 +7,8 @@ class AgentState(TypedDict, total=False):
     user_message: str
     plan: str
     route: str
+    status: str
+    error: str
     answer: str
     provider: str
     model: str

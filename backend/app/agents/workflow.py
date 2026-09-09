@@ -7,6 +7,43 @@ from app.llm.factory import get_llm_provider
 from app.observability.llm import record_llm_call
 from app.prompts.registry import get_prompt_template
 
+from app.llm.errors import LLMProviderError
+from app.schemas.llm import LLMResult, LLMUsage
+
+def provider_failure_state(
+    exc: LLMProviderError,
+    route: str,
+    prompt_id: str,
+) -> AgentState:
+    failure_result = LLMResult(
+        content="",
+        provider=exc.provider,
+        model=exc.model,
+        latency_ms=0,
+        usage=LLMUsage(),
+    )
+
+    record_llm_call(
+        prompt_id=prompt_id,
+        result=failure_result,
+        outcome="failure",
+        metadata={
+            "workflow": "conditional-langgraph:v2",
+            "route": route,
+        },
+    )
+
+    return {
+        "status": "failed",
+        "route": route,
+        "error": "AI provider is temporarily unavailable",
+        "provider": exc.provider,
+        "model": exc.model,
+        "prompt_id": prompt_id,
+        "latency_ms": 0,
+        "usage": LLMUsage(),
+    }
+
 
 def plan_node(state: AgentState) -> AgentState:
     user_message = state["user_message"]
@@ -48,18 +85,27 @@ async def code_explanation_node(state: AgentState) -> AgentState:
     )
 
     provider = get_llm_provider()
-    result = await provider.generate(prompt)
+
+    try:
+        result = await provider.generate(prompt)
+    except LLMProviderError as exc:
+        return provider_failure_state(
+            exc=exc,
+            route="code_explanation",
+            prompt_id=prompt_template.prompt_id,
+        )
 
     record_llm_call(
         prompt_id=prompt_template.prompt_id,
         result=result,
         metadata={
-            "workflow": "conditional-langgraph:v1",
+            "workflow": "conditional-langgraph:v2",
             "route": "code_explanation",
         },
     )
 
     return {
+        "status": "completed",
         "route": "code_explanation",
         "answer": result.content,
         "provider": result.provider,
@@ -79,18 +125,27 @@ async def general_answer_node(state: AgentState) -> AgentState:
     )
 
     provider = get_llm_provider()
-    result = await provider.generate(prompt)
+
+    try:
+        result = await provider.generate(prompt)
+    except LLMProviderError as exc:
+        return provider_failure_state(
+            exc=exc,
+            route="general_answer",
+            prompt_id=prompt_template.prompt_id,
+        )
 
     record_llm_call(
         prompt_id=prompt_template.prompt_id,
         result=result,
         metadata={
-            "workflow": "conditional-langgraph:v1",
+            "workflow": "conditional-langgraph:v2",
             "route": "general_answer",
         },
     )
 
     return {
+        "status": "completed",
         "route": "general_answer",
         "answer": result.content,
         "provider": result.provider,
