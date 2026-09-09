@@ -4,6 +4,8 @@ from app.llm.base import LLMProvider
 from app.llm.errors import LLMProviderError
 from app.schemas.llm import LLMResult, LLMUsage
 
+transient_failure_attempts: dict[str, int] = {}
+
 
 class MockLLMProvider(LLMProvider):
     name = "mock"
@@ -15,7 +17,20 @@ class MockLLMProvider(LLMProvider):
                 message="Mock provider failed",
                 provider=self.name,
                 model=self.model,
+                retryable=False,
             )
+
+        if "__simulate_transient_provider_failure__" in prompt:
+            attempts = transient_failure_attempts.get(prompt, 0)
+            transient_failure_attempts[prompt] = attempts + 1
+
+            if attempts == 0:
+                raise LLMProviderError(
+                    message="Mock provider transient failure",
+                    provider=self.name,
+                    model=self.model,
+                    retryable=True,
+                )
 
         start_time = time.perf_counter()
 

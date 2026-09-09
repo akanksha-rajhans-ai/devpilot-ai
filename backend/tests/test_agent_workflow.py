@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 
 from app.agents.workflow import agent_workflow
 from app.main import app
+from app.llm.mock_provider import transient_failure_attempts
 
 client = TestClient(app)
 
@@ -66,3 +67,19 @@ def test_agent_run_endpoint_returns_workflow_failure_for_provider_failure():
     assert body["workflow"] == "conditional-langgraph:v2"
     assert body["provider"] == "mock"
     assert body["model"] == "mock-dev-model"
+
+def test_agent_run_endpoint_recovers_from_transient_provider_failure():
+    transient_failure_attempts.clear()
+
+    response = client.post(
+        "/api/v1/agent/run",
+        json={"message": "__simulate_transient_provider_failure__"},
+    )
+
+    assert response.status_code == 200
+
+    body = response.json()
+    assert body["status"] == "completed"
+    assert body["provider"] == "mock"
+    assert body["model"] == "mock-dev-model"
+    assert "__simulate_transient_provider_failure__" in body["answer"]

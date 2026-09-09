@@ -9,6 +9,10 @@ from app.prompts.registry import get_prompt_template
 
 from app.llm.errors import LLMProviderError
 from app.schemas.llm import LLMResult, LLMUsage
+from langgraph.types import RetryPolicy
+
+def should_retry_provider_error(exc: Exception) -> bool:
+    return isinstance(exc, LLMProviderError) and exc.retryable
 
 def provider_failure_state(
     exc: LLMProviderError,
@@ -89,6 +93,8 @@ async def code_explanation_node(state: AgentState) -> AgentState:
     try:
         result = await provider.generate(prompt)
     except LLMProviderError as exc:
+        if exc.retryable:
+            raise
         return provider_failure_state(
             exc=exc,
             route="code_explanation",
@@ -129,6 +135,8 @@ async def general_answer_node(state: AgentState) -> AgentState:
     try:
         result = await provider.generate(prompt)
     except LLMProviderError as exc:
+        if exc.retryable:
+            raise
         return provider_failure_state(
             exc=exc,
             route="general_answer",
@@ -160,8 +168,22 @@ def build_agent_workflow():
     graph_builder = StateGraph(AgentState)
 
     graph_builder.add_node("plan", plan_node)
-    graph_builder.add_node("code_explanation", code_explanation_node)
-    graph_builder.add_node("general_answer", general_answer_node)
+    graph_builder.add_node(
+        "code_explanation",
+        code_explanation_node,
+        retry_policy=RetryPolicy(
+            max_attempts=2,
+            retry_on=should_retry_provider_error,
+        ),
+    )
+    graph_builder.add_node(
+        "general_answer",
+        general_answer_node,
+        retry_policy=RetryPolicy(
+            max_attempts=2,
+            retry_on=should_retry_provider_error,
+        ),
+    )
 
     graph_builder.add_edge(START, "plan")
     graph_builder.add_conditional_edges("plan", route_after_plan)

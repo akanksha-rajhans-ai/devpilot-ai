@@ -4,7 +4,9 @@ class LLMProviderError(Exception):
         message: str,
         provider: str,
         model: str,
+        retryable: bool = False,
     ):
         super().__init__(message)
         self.provider = provider
         self.model = model
+        self.retryable = retryable
