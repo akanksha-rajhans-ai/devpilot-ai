@@ -59,7 +59,7 @@ def test_agent_run_endpoint_includes_route():
 
     body = response.json()
     assert body["status"] == "completed"
-    assert body["workflow"] == "conditional-langgraph:v2"
+    assert body["workflow"] == "conditional-langgraph:v3"
     assert body["route"] == "code_explanation"
     assert body["provider"] == "mock"
     assert body["prompt_id"] == "agent.code_explanation:v1"
@@ -75,7 +75,7 @@ def test_agent_run_endpoint_returns_workflow_failure_for_provider_failure():
     body = response.json()
     assert body["status"] == "failed"
     assert body["error"] == "AI provider is temporarily unavailable"
-    assert body["workflow"] == "conditional-langgraph:v2"
+    assert body["workflow"] == "conditional-langgraph:v3"
     assert body["provider"] == "mock"
     assert body["model"] == "mock-dev-model"
 
@@ -107,3 +107,20 @@ def test_agent_run_endpoint_generates_thread_id_when_missing():
     body = response.json()
     assert body["thread_id"]
     assert body["status"] == "completed"
+
+def test_agent_run_endpoint_returns_waiting_for_approval_for_risky_request():
+    response = client.post(
+        "/api/v1/agent/run",
+        json={
+            "message": "Delete production data",
+            "thread_id": f"approval-test-{uuid.uuid4()}",
+        },
+    )
+
+    assert response.status_code == 200
+
+    body = response.json()
+    assert body["status"] == "waiting_for_approval"
+    assert body["route"] == "needs_approval"
+    assert body["approval_reason"] == "Request may perform a sensitive or irreversible action."
+    assert body["answer"] is None

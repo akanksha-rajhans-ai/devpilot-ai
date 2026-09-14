@@ -59,8 +59,28 @@ def plan_node(state: AgentState) -> AgentState:
     }
 
 
-def route_after_plan(state: AgentState) -> Literal["code_explanation", "general_answer"]:
+def route_after_plan(
+    state: AgentState,
+) -> Literal["needs_approval", "code_explanation", "general_answer"]:
     message = state["user_message"].lower()
+
+    risky_keywords = [
+        "delete",
+        "drop",
+        "remove",
+        "deploy",
+        "production",
+        "prod",
+        "credential",
+        "secret",
+        "token",
+        "password",
+        "post to slack",
+        "comment on pr",
+    ]
+
+    if any(keyword in message for keyword in risky_keywords):
+        return "needs_approval"
 
     code_keywords = [
         "code",
@@ -80,6 +100,16 @@ def route_after_plan(state: AgentState) -> Literal["code_explanation", "general_
         return "code_explanation"
 
     return "general_answer"
+
+
+def needs_approval_node(state: AgentState) -> AgentState:
+    return {
+        "status": "waiting_for_approval",
+        "route": "needs_approval",
+        "approval_reason": "Request may perform a sensitive or irreversible action.",
+        "answer": None,
+    }
+
 
 
 async def code_explanation_node(state: AgentState) -> AgentState:
@@ -178,6 +208,9 @@ def build_agent_workflow():
             retry_on=should_retry_provider_error,
         ),
     )
+
+    graph_builder.add_node("needs_approval", needs_approval_node)
+
     graph_builder.add_node(
         "general_answer",
         general_answer_node,
@@ -191,6 +224,8 @@ def build_agent_workflow():
     graph_builder.add_conditional_edges("plan", route_after_plan)
     graph_builder.add_edge("code_explanation", END)
     graph_builder.add_edge("general_answer", END)
+    graph_builder.add_edge("needs_approval", END)
+
 
     checkpointer = InMemorySaver()
     return graph_builder.compile(checkpointer=checkpointer)

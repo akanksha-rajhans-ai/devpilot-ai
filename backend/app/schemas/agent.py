@@ -14,6 +14,7 @@ class AgentRunResponse(BaseModel):
     status: str
     answer: Optional[str] = None
     error: Optional[str] = None
+    approval_reason: Optional[str] = None
     plan: str
     workflow: str
     route: str

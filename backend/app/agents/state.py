@@ -9,6 +9,7 @@ class AgentState(TypedDict, total=False):
     route: str
     status: str
     error: str
+    approval_reason: str
     answer: str
     provider: str
     model: str
