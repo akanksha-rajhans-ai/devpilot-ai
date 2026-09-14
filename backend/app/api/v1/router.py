@@ -55,6 +55,15 @@ async def admin_status(
 async def run_agent(request: AgentRunRequest):
     thread_id = request.thread_id or str(uuid.uuid4())
 
+    audit_event(
+        event="agent.workflow.started",
+        outcome="started",
+        metadata={
+            "workflow": "conditional-langgraph:v3",
+            "thread_id": thread_id,
+        },
+    )
+
     result = await agent_workflow.ainvoke(
         {
             "user_message": request.message,
@@ -63,6 +72,16 @@ async def run_agent(request: AgentRunRequest):
             "configurable": {
                 "thread_id": thread_id,
             }
+        },
+    )
+
+    audit_event(
+        event="agent.workflow.finished",
+        outcome=result["status"],
+        metadata={
+            "workflow": "conditional-langgraph:v3",
+            "thread_id": thread_id,
+            "route": result.get("route"),
         },
     )
 
