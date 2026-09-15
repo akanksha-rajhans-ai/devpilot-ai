@@ -13,6 +13,10 @@ from app.schemas.agent import AgentRunRequest, AgentRunResponse
 
 import uuid
 
+from app.rag.document_store import document_store
+from app.schemas.document import DocumentIngestRequest, DocumentIngestResponse
+from app.services.document_service import DocumentService
+
 api_router = APIRouter()
 
 
@@ -22,6 +26,15 @@ async def api_status():
         "status": "ok",
         "api_version": "v1",
     }
+
+@api_router.post(
+    "/documents",
+    response_model=DocumentIngestResponse,
+    tags=["documents"],
+)
+async def ingest_document(request: DocumentIngestRequest):
+    service = DocumentService(document_store)
+    return service.ingest_document(request)
 
 @api_router.post("/chat", response_model=ChatResponse, tags=["chat"])
 async def chat(request: ChatRequest):
