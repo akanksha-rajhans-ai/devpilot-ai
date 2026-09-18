@@ -1,20 +1,25 @@
-from app.rag.document_store import InMemoryDocumentStore
-from app.schemas.document import DocumentIngestRequest, DocumentIngestResponse
 from typing import Optional
 from uuid import uuid4
 
 from app.rag.chunker import SimpleTextChunker
-from app.rag.document_store import StoredDocumentChunk
+from app.rag.document_store import (
+    InMemoryDocumentStore,
+    StoredDocumentChunk,
+)
+from app.schemas.document import (
+    DocumentIngestRequest,
+    DocumentIngestResponse,
+)
 
 
 class DocumentService:
     def __init__(
         self,
-        store,
+        store: InMemoryDocumentStore,
         chunker: Optional[SimpleTextChunker] = None,
     ):
-    self.store = store
-    self.chunker = chunker or SimpleTextChunker()
+        self.store = store
+        self.chunker = chunker or SimpleTextChunker()
 
     def ingest_document(
         self,
@@ -30,14 +35,17 @@ class DocumentService:
         stored_chunks = [
             StoredDocumentChunk(
                 chunk_id=str(uuid4()),
-                document_id=document_id,
+                document_id=document.document_id,
                 chunk_index=chunk.chunk_index,
                 content=chunk.content,
             )
             for chunk in text_chunks
         ]
 
-        self.store.add_chunks(document_id, stored_chunks)
+        self.store.add_chunks(
+            document.document_id,
+            stored_chunks,
+        )
 
         return DocumentIngestResponse(
             document_id=document.document_id,
@@ -45,5 +53,3 @@ class DocumentService:
             status="ingested",
             chunk_count=len(stored_chunks),
         )
-
-    

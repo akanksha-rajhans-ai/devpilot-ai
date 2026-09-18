@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.rag.document_store import document_store
 
+
 client = TestClient(app)
 
 
@@ -13,7 +14,10 @@ def test_document_ingestion_stores_document():
         "/api/v1/documents",
         json={
             "title": "RAG Notes",
-            "content": "Retrieval augmented generation combines search with generation.",
+            "content": (
+                "Retrieval augmented generation combines "
+                "search with generation."
+            ),
         },
     )
 
@@ -23,11 +27,21 @@ def test_document_ingestion_stores_document():
     assert body["document_id"]
     assert body["title"] == "RAG Notes"
     assert body["status"] == "ingested"
+    assert body["chunk_count"] >= 1
 
     stored = document_store.get_document(body["document_id"])
     assert stored is not None
     assert stored.title == "RAG Notes"
-    assert stored.content == "Retrieval augmented generation combines search with generation."
+    assert stored.content == (
+        "Retrieval augmented generation combines "
+        "search with generation."
+    )
+
+    chunks = document_store.get_chunks(body["document_id"])
+
+    assert len(chunks) == body["chunk_count"]
+    assert chunks[0].document_id == body["document_id"]
+    assert chunks[0].chunk_index == 0
 
 
 def test_document_ingestion_requires_content():
@@ -40,13 +54,3 @@ def test_document_ingestion_requires_content():
     )
 
     assert response.status_code == 422
-
-    body = response.json()
-
-    assert body["chunk_count"] >= 1
-
-    chunks = document_store.get_chunks(body["document_id"])
-
-    assert len(chunks) == body["chunk_count"]
-    assert chunks[0].document_id == body["document_id"]
-    assert chunks[0].chunk_index == 0
