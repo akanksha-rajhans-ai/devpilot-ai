@@ -42,4 +42,11 @@ def test_document_ingestion_requires_content():
     assert response.status_code == 422
 
     body = response.json()
-    assert body["error"]["code"] == "VALIDATION_ERROR"
+
+    assert body["chunk_count"] >= 1
+
+    chunks = document_store.get_chunks(body["document_id"])
+
+    assert len(chunks) == body["chunk_count"]
+    assert chunks[0].document_id == body["document_id"]
+    assert chunks[0].chunk_index == 0

@@ -4,6 +4,7 @@ from typing import Optional
 from uuid import uuid4
 
 
+
 @dataclass(frozen=True)
 class StoredDocument:
     document_id: str
@@ -12,10 +13,18 @@ class StoredDocument:
     created_at: datetime
     metadata: dict[str, str] = field(default_factory=dict)
 
+@dataclass(frozen=True)
+class StoredDocumentChunk:
+    chunk_id: str
+    document_id: str
+    chunk_index: int
+    content: str
+
 
 class InMemoryDocumentStore:
     def __init__(self):
         self._documents: dict[str, StoredDocument] = {}
+        self._chunks: dict[str, list[StoredDocumentChunk]] = {}
 
     def add_document(
         self,
@@ -39,6 +48,21 @@ class InMemoryDocumentStore:
 
     def clear(self) -> None:
         self._documents.clear()
+        self._chunks.clear()
+
+    def add_chunks(
+        self,
+        document_id: str,
+        chunks: list[StoredDocumentChunk],
+    ) -> None:
+        self._chunks[document_id] = chunks
+
+
+    def get_chunks(
+        self,
+        document_id: str,
+    ) -> list[StoredDocumentChunk]:
+        return self._chunks.get(document_id, [])
 
 
 document_store = InMemoryDocumentStore()

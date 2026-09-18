@@ -10,3 +10,9 @@ class DocumentIngestResponse(BaseModel):
     document_id: str
     title: str
     status: str
+
+class DocumentIngestResponse(BaseModel):
+    document_id: str
+    title: str
+    status: str
+    chunk_count: int
