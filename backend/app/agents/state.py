@@ -16,3 +16,7 @@ class AgentState(TypedDict, total=False):
     prompt_id: str
     latency_ms: float
     usage: LLMUsage
+    citations: list[dict]
+    retrieval_count: int
+    tool_name: str
+    tool_result: dict

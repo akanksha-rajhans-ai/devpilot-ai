@@ -15,6 +15,7 @@ from app.core.config import get_settings
 from app.core.context import reset_trace_id, set_trace_id
 from app.core.errors import build_error_response
 from app.core.logging import get_logger
+from app.observability.metrics import record_http_request
 
 logger = get_logger(__name__)
 
@@ -31,9 +32,6 @@ class TraceMiddleware(BaseHTTPMiddleware):
         self.requests.clear()
 
     async def dispatch(self, request: Request, call_next: Callable):
-        settings = get_runtime_settings(request)
-
-    async def dispatch(self, request: Request, call_next: Callable):
         incoming_trace_id = request.headers.get("X-Trace-Id")
         trace_id = incoming_trace_id or str(uuid.uuid4())
 
@@ -43,6 +41,12 @@ class TraceMiddleware(BaseHTTPMiddleware):
         try:
             response = await call_next(request)
             duration_ms = (time.perf_counter() - start_time) * 1000
+            record_http_request(
+                request.method,
+                request.url.path,
+                response.status_code,
+                duration_ms / 1000,
+            )
 
             response.headers["X-Trace-Id"] = trace_id
 

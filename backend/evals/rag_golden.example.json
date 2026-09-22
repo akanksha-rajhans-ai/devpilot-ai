@@ -1,0 +1,9 @@
+{
+  "description": "Replace document IDs after ingesting the sample knowledge base.",
+  "cases": [
+    {
+      "question": "How does DevPilot perform retrieval?",
+      "expected_document_id": "replace-with-document-id"
+    }
+  ]
+}

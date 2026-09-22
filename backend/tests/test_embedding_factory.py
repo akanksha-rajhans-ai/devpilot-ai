@@ -9,10 +9,11 @@ def test_factory_returns_mock_embedding_provider():
     get_settings.cache_clear()
 
     provider = get_embedding_provider()
+    settings = get_settings()
 
     assert isinstance(provider, MockEmbeddingProvider)
     assert provider.name == "mock"
-    assert provider.dimension == 8
+    assert provider.dimension == settings.embedding_dimension
 
 
 def test_factory_rejects_unknown_embedding_provider(

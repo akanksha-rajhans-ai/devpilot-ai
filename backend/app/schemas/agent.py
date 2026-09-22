@@ -2,6 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
+from app.schemas.document import Citation
 from app.schemas.llm import LLMUsage
 
 
@@ -24,3 +25,7 @@ class AgentRunResponse(BaseModel):
     prompt_id: Optional[str] = None
     latency_ms: Optional[float] = None
     usage: Optional[LLMUsage] = None
+    citations: list[Citation] = Field(default_factory=list)
+    retrieval_count: int = 0
+    tool_name: Optional[str] = None
+    tool_result: Optional[dict] = None

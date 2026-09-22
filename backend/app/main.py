@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 
 from app.api.health import router as health_router
 from app.api.v1.router import api_router
@@ -6,6 +8,8 @@ from app.core.config import get_settings
 from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging, get_logger
 from app.core.middleware import InMemoryRateLimitMiddleware, TraceMiddleware
+from app.observability.metrics import CONTENT_TYPE_LATEST, render_metrics
+from app.observability.tracing import configure_tracing
 
 configure_logging()
 
@@ -17,12 +21,26 @@ app = FastAPI(
     version=settings.app_version,
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[origin.strip() for origin in settings.cors_origins.split(",")],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.add_middleware(InMemoryRateLimitMiddleware)
 app.add_middleware(TraceMiddleware)
 register_exception_handlers(app)
 
 app.include_router(health_router)
 app.include_router(api_router, prefix=settings.api_v1_prefix)
+configure_tracing(app, settings)
+
+
+@app.get("/metrics", include_in_schema=False)
+async def metrics():
+    return Response(content=render_metrics(), media_type=CONTENT_TYPE_LATEST)
 
 
 @app.get("/__test__/error", include_in_schema=False)

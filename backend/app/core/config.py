@@ -22,7 +22,13 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-4.1-mini"
 
     embedding_provider: str = "mock"
-    embedding_dimension: int = 8
+    embedding_dimension: int = 384
+    embedding_model: str = "mock-lexical-v1"
+
+    document_repository: Literal["memory", "database"] = "memory"
+    rag_default_top_k: int = 4
+    rag_max_top_k: int = 10
+    rag_min_similarity: float = 0.0
 
     jwt_secret_key: str = "dev-only-change-me"
     jwt_algorithm: str = "HS256"
@@ -38,6 +44,14 @@ class Settings(BaseSettings):
     )
 
     redis_url: str = "redis://localhost:6379/0"
+
+    otel_enabled: bool = False
+    otel_service_name: str = "devpilot-ai"
+    otel_exporter_otlp_endpoint: str = ""
+    cors_origins: str = (
+        "http://localhost:8080,http://127.0.0.1:8080,"
+        "http://localhost:5173,http://127.0.0.1:5173"
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",
